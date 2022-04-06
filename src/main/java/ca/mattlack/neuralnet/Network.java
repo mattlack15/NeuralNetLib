@@ -19,6 +19,10 @@ public class Network {
         return current.getData();
     }
 
+    public List<DenseLayer> getLayers() {
+        return layers;
+    }
+
     public double train(double[][] trainingExamples, double[][] trainingLabels, int batchSize) {
         assert trainingExamples.length == trainingLabels.length;
 
@@ -35,7 +39,7 @@ public class Network {
 
             loss += Matrix.wrap(label).copy().subtract(out).total();
 
-            Matrix current = out.subtract(Matrix.wrap(label));
+            Matrix current = Matrix.wrap(label).subtract(out);
 
             for (int j = layers.size()-1; j >= 0; j--) {
                 DenseLayer layer = layers.get(j);

@@ -7,8 +7,8 @@ import java.util.function.Function;
 public class DenseLayer {
     private final Matrix weights;
     private final Matrix biases;
-    private final Matrix m;
-    private final Matrix v;
+    private Matrix m;
+    private Matrix v;
     private final Matrix accUpdates;
     private final Matrix accBiasUpdates;
     private final Matrix nonActivatedState;
@@ -19,6 +19,7 @@ public class DenseLayer {
     private double updateIteration = 1;
     private double nonZero = 0.000000001D;
     private int accumulationNum = 0;
+    private int activationType = 0;
 
     private Function<Double, Double> activationFunction = (a) -> a < 0 ? 0 : a; //Default is ReLU
     private Function<Double, Double> activationFunctionDer = (a) -> a < 0 ? 0 : 1D; //Default is ReLU
@@ -41,6 +42,42 @@ public class DenseLayer {
         this.biases.apply((a) -> random.nextGaussian() / Math.sqrt(inputSize));
     }
 
+    public double getUpdateIteration() {
+        return updateIteration;
+    }
+
+    public Matrix getWeights() {
+        return weights;
+    }
+
+    public Matrix getBiases() {
+        return biases;
+    }
+
+    public Matrix getM() {
+        return m;
+    }
+
+    public Matrix getV() {
+        return v;
+    }
+
+    public void setM(Matrix m) {
+        this.m = m;
+    }
+
+    public void setV(Matrix v) {
+        this.v = v;
+    }
+
+    public void setWeights(Matrix weights) {
+        this.weights.copyExternal(weights);
+    }
+
+    public void setBiases(Matrix biases) {
+        this.biases.copyExternal(biases);
+    }
+
     //Pretty much just for convenience
     public DenseLayer setActivationFunctionSigmoid() {
 
@@ -50,7 +87,22 @@ public class DenseLayer {
             return s * (1D - s);
         };
 
+        activationType = 1;
+
         return this;
+    }
+
+    public DenseLayer setActivationFunctionLinear() {
+        this.activationFunction = (a) -> a;
+        this.activationFunctionDer = (a) -> 1D;
+
+        activationType = 2;
+
+        return this;
+    }
+
+    public int getActivationType() {
+        return activationType;
     }
 
     public Matrix propagate(Matrix input) {
@@ -88,14 +140,22 @@ public class DenseLayer {
         v_hat.apply(Math::sqrt).add(nonZero);
         m_hat.divide(v_hat).multiply(learningRate / accumulationNum);
 
-        this.weights.subtract(m_hat);
+        this.weights.add(m_hat);
 
-        this.biases.subtract(this.accBiasUpdates.multiply(learningRate / accumulationNum));
+        this.biases.add(this.accBiasUpdates.multiply(learningRate / accumulationNum));
 
         accUpdates.multiply(0);
         accBiasUpdates.multiply(0);
         accumulationNum = 0;
         updateIteration++;
+    }
+
+    public void resetUpdateIteration() {
+        updateIteration = 1;
+    }
+
+    public void setUpdateIteration(double updateIteration) {
+        this.updateIteration = updateIteration;
     }
 }
 
